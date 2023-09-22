@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Review and Correct Predicted Heads</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            background-color: #000;
+            color: #fff;
+            padding: 20px;
+        }
+
+        button {
+            background-color: #000;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #fff;
+            color: #000;
+        }
+        input {
+            background-color: #000;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        input:hover {
+            background-color: #fff;
+            color: #000;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 95%;
+            margin: 10px auto;
+        }
+
+        th, td {
+            border: 1px solid #fff;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #000;
+        }
+
+        tr:nth-child(even) {
+            background-color: #222;
+        }
+
+        tr:nth-child(odd) {
+            background-color: #111;
+        }
+
+        select {
+            background-color: #000;
+            color: #fff;
+            border: 1px solid #fff;
+            padding: 5px;
+        }
+
+        select:hover {
+            background-color: #fff;
+            color: #000;
+        }
+
+        select[name="others_text"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Review and Correct Predicted Heads</h1>
+    <button id="submitTopButton" onclick="submitForm()">Submit Corrections</button>
+    <form method="POST" action="/process_corrections" onsubmit="return validateForm()">
+    <table>
+        <!-- Include table headers here -->
+        <tr>
+            <th>Description</th>
+            <th>Debit Amount</th>
+            <th>Credit Amount</th>
+            <th>SIC Code</th>
+            <th>Predicted Heads</th>
+        </tr>
+        {% for row in excel_data %}
+        <tr>
+            <td>{{ row['description'] }}</td>
+            <td>{{ row['debit_amount'] }}</td>
+            <td>{{ row['credit_amount'] }}</td>
+            <td>{{ row['sic code'] }}</td>
+            <td>
+                <!-- Generate a nested dropdown for Predicted Heads items -->
+                <div class="nested-dropdown">
+                    <select name="predicted_heads">
+                        {% for item in row['Predicted Heads'] %}
+                            <option value="{{ item }}" {% if loop.first %} selected {% endif %}>{{ item }}</option>
+                        {% endfor %}
+                        <option value="Others">Others</option>
+                    </select>
+                    <!-- Nested dropdown for "Others" -->
+                    <select name="others_text" style="display: none;">
+                        <option value="" disabled> Select an Account Head </option>
+                        {% for option in remaining_ones %}
+                            <option value="{{ option }}">{{ option }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    <input type="submit" name="submit_button" value="Submit Corrections">
+</form>
+{% set remaining_ones = remaining_ones %}
+<script>
+function validateForm() {
+    // Client-side validation logic:
+    // You can add any validation rules you need here.
+    // For example, check if Predicted Heads values are valid.
+    // If validation fails, alert the user and return false to prevent form submission.
+    var predictedHeads = document.getElementsByName("predicted_heads");
+    var othersText = document.getElementsByName("others_text");
+    for (var i = 0; i < predictedHeads.length; i++) {
+        var predictedHeadsValue = predictedHeads[i].value.trim();
+        if (predictedHeadsValue === "Others") {
+            var othersTextValue = othersText[i].value.trim();
+            if (othersTextValue === "") {
+                alert("Please enter a value for 'Others' or select an item from the dropdown.");
+                return false;
+            }
+        } else if (predictedHeadsValue === "") {
+            alert("Please select an item from the dropdown or choose 'Others' to enter a custom value.");
+            return false;
+        }
+    }
+    return true; // Return true to allow form submission.
+}
+
+// Show/hide nested dropdown for "Others" based on dropdown selection
+var nestedDropdowns = document.querySelectorAll(".nested-dropdown");
+
+nestedDropdowns.forEach(function(dropdown) {
+    var predictedHeadsDropdown = dropdown.querySelector('select[name="predicted_heads"]');
+    var othersTextDropdown = dropdown.querySelector('select[name="others_text"]');
+    
+    predictedHeadsDropdown.addEventListener("change", function() {
+        var selectedIndex = this.selectedIndex;
+        var selectedValue = this.options[selectedIndex].value;
+        
+        if (selectedValue === "Others") {
+            othersTextDropdown.style.display = "inline-block";
+        } else {
+            othersTextDropdown.style.display = "none";
+        }
+    });
+});
+
+function submitForm() {
+        if (validateForm()) {
+            document.querySelector("form").submit();
+        }
+    }
+</script>
+</body>
+</html>
